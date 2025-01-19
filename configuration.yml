@@ -1,9 +1,9 @@
-data_source nyc_warehouse:
- type: postgres
- connection:
-    host: localhost
+data_source yellow_taxi:
+  type: postgres
+  connection:
+    host: localhost  # Ou l'IP du conteneur Docker si accessible directement
     port: 15432
-    username: postgres
+    username: admin
     password: admin
- database: nyc_warehouse
- schema: public
+    database: yellow_taxi
+    schema: public
