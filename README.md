@@ -1,122 +1,53 @@
-ATL-Datamart Version Python
-==============================
+# ATL-Datamart Project
 
-Projet pour : 
-* Cours d'atelier Architecture décisionnel Datamart (TRDE704) pour les I1 de l'EPSI Paris et Arras.
+## Projet pour le Cours d'atelier Architecture décisionnelle Datamar
 
-Le sujet est à disposition dans le dossier docs ET le sujet à jour dans votre espace learning.
+## Prérequis
 
-## Comment utiliser ce template ?
+Avant de démarrer le projet, assurez-vous d'avoir installé les outils suivants :
 
-### Gérer l'infrastructure
-Vous n'avez pas besoin d'installer l'ensemble de l'architecture sur votre PC. L'intégralité de l'architecture (à l'exception des dépendances développement) est géré par le fichier de configuration `docker-compose.yml`
+- **Git**
+- **Docker Desktop**
+- **Python 3.x**
 
-* Pour lancer l'infrastructure
-```sh
-docker compose up
-```
-* Pour stopper l'infrastrucutre
-```sh
-docker compose down
-```
+## Lancer l'infrastructure avec Docker Compose
+Une fois que le projet est cloné, vous pouvez utiliser Docker Compose pour lancer l'infrastructure.
 
-**Remarque Linux** :
-- En cas de problème avec le daemon de docker, c'est parceque vous avez deux docker d'installé sur votre machine (Docker Desktop et Docker Engine via CLI). Seule la version Engine sera actif, et donc uniquement accessible via `sudo`. Si vous avez le besoin de gérer visuellement les containers, je vous invite à utiliser [portainer](https://docs.portainer.io/start/install-ce/server
+Pour démarrer les services (MinIO, PostgreSQL, etc.), exécutez la commande suivante :
 
-### Description détaillé du sujet
+**docker compose up**
 
-*  Pour le TP 1 :
-    * Il faudra utiliser le fichier qui se situe à `src/data/grab_parquet.py` et compléter les fonctions qui sont vides.
-    * Remarque : Ne vous cassez pas la tête à effacer les fonctions. Sinon, vous allez augmenter exponentiellement la difficulté de réaliser ce TP.
-*  Pour le TP 2 : Il existe deux approches :
-    Le but de ce TP est de récupérer les fichiers parquets stockés dans votre datalake (qui est Minio) pour le stocker en l'état brute, vers le Data Warehouse (ici postgres par défaut)
-    * Soit vous utilisez [Amphi.AI](https://amphi.ai/), qui est un ETL opensource ouvert (Difficulté élevé) (***SVP Faites moi un retour régulier pour l'améliorer !***)
-    * Soit vous adaptez le code situé dans `src/data/dump_to_sql.py`. La version actuelle récupère les fichiers stockés en local et déverse les données dans le Data Warehouse sans les optimisations d'injection. Votre but ici sera d'adapter le code pour récupérer depuis le datalake Minio, et d'optimiser la vitesse de l'injection des données.
-       * **Remarque** : L'implémentation actuel permet uniquement de prendre les fichiers parquets sauvegardés en local. Vous devriez modifier le programme pour qu'il récupère les fichiers parquets que vous avez stockés dans Minio.
-*  Pour le TP 3:
-    * Vous devez utiliser les requêtes SQL sur le SGBD de votre choix afin de créer les tables en modèle en Flocon. Par soucis de simplicité du sujet, vous êtes libre utiliser le SGBD de votre choix sans tenir compte des propriété OLAP.
-    * Vous aurez donc un script SQL pour chaque tâche distinct :
-      * `creation.sql` pour la création des tables en flocons avec les contraintes associés.
-      * `insertion.sql` pour insérer les données depuis votre base de donnée `Data Warehouse` vers votre base de donnée `Data Mart`.
-         * Remarque : C'est bien **DEUX SERVEURS SGBD** distinct **ET NON DEUX BASES DE DONNEES** !
-*   Pour le TP 4 :
-      * Lorsque vous avez fait le TP3, vous devriez normalement avoir une idée sur la restitution des données que vous souhaitez faire dans la partie Dataviz.
-        * Si ce n'est pas le cas, vous pouvez ouvrir un Notebook qui sera sauvegardé dans le dossier `notesbooks` pour réaliser votre Analyse Exploratoire de Données (EDA).
-        * Pour les élèves de DC PARIS : Vous avez le choix entre une visualisation sous MATPLOTLIB/PLOTLY/SEABORN ou bien Tableau Desktop / PowerBI.
-        * Pour les plus chaud d'entre vous, vous pouvez concevoir un tableau de bord à l'aide de [Streamlit](https://streamlit.io/), vous y trouverez des exemples dans la section Gallery.
-      * Vous devez connecter votre outil de Data Visualisation à votre base de donnée `Data Mart` afin de produire les visualisations.
-*   Pour le TP 5:
-      * Cette partie du TP vous servira d'introduction à l'orchestration des tâches d'un projet Big Data. C'est-à-dire de lancer des scripts python de manière totalement automatisée sur un interval définie.
-      * Pour le moment, je vous demande de réaliser une dag qui permet de télécharger un parquet du dernier mois en vigueur (TP 1) et de le stocker vers Minio.
-      * Une fois que vous avez compris le fonctionnement des dags, vous pouvez vous amuser à automatiser le TP 2 et 3 afin de rendre le TP 4 totalement autonome.
+Pour stopper l'infrastructure, exécutez :
 
-Pour le TP 5, il faudra créer vous-même le répertoire suivant :
-Sinon vous risquez d'avoir des problèmes au lancement des conteneurs.
-------------
+**docker compose down**
 
-    ├── airflow
-    │   ├── config       <- Configuration files related to the Airflow Instance
-    │   ├── dags         <- Folder that contains all the dags
-    │   ├── logs         <- Contains the logs of the previously dags run
-    │   └── plugins      <- Should be empty : Contains all needed plugins to make the dag work
-   
+## Accéder à MinIO
+Accédez à MinIO via l'interface web à l'adresse http://localhost:9000.
+Utilisez les identifiants par défaut :
+Identifiant : minio
+Mot de passe : minio123
 
 
---------
+## TP1 : Téléchargement et Chargement de Données sur MinIO
+L'objectif de ce TP est de télécharger des fichiers de données au format .parquet depuis une source externe, de les organiser localement, puis de les charger dans MinIO, un service de stockage d'objets.
 
-Project Organization
-------------
-    ├── airflow
-    │   ├── config       <- Configuration files related to the Airflow Instance
-    │   ├── dags         <- Folder that contains all the dags
-    │   ├── logs         <- Contains the logs of the previously dags run
-    │   └── plugins      <- Should be empty : Contains all needed plugins to make the dag work
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
+Le script Python grab_parquet.py est utilisé pour télécharger les fichiers et les charger sur MinIO.
+
+## TP2 : Transfert des données depuis le Data Lake (MinIO) vers le Data Warehouse (PostgreSQL)
+Ce TP se concentre sur le transfert des données depuis MinIO (Data Lake) vers PostgreSQL (Data Warehouse). Les fichiers .parquet sont lus et insérés dans une table PostgreSQL via le module pandas.
+
+## TP3 : Conception d'un Data Mart avec PostgreSQL - Implémentation d'un Modèle Flocon
+Dans ce TP, nous avons conçu un Data Mart en créant un modèle Flocon avec plusieurs tables de dimensions et une table factuelle. Les données sont extraites du Data Warehouse et insérées dans les tables du Data Mart.
+
+## TP4 : Visualisation
+Les données du Data Mart sont importées dans PowerBI pour créer des visualisations interactives, notamment des graphiques sur les revenus, les courses et le nombre de passagers.
+voici le lien pour telecharger le Dashboard du TP4 : https://drive.google.com/file/d/1eu1yH_ZxzGdmS094ZCG6SHPx6udEhsTe/view?usp=sharing
+
+![Dashboard TP4](Dashboard.png)
+
+## TP5 : Automatisation du TP1 avec Airflow
+Ce TP automatise le processus du TP1 à l'aide d'Airflow. Le téléchargement des données et leur chargement dans MinIO sont programmés pour être exécutés automatiquement via un DAG (Directed Acyclic Graph) dans Airflow.
 
 
---------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+Conclusion
+Ce projet fournit une démonstration complète de l'architecture décisionnelle, allant de l'extraction des données à leur visualisation, en passant par la création d'un Data Mart et l'automatisation des processus. Grâce à Docker, MinIO, PostgreSQL, et Airflow, nous avons créé une solution robuste et flexible pour gérer de grandes quantités de données et les transformer en informations utiles.
