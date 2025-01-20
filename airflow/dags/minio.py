@@ -1,76 +1,91 @@
-# Import Python dependencies needed for the workflow
-from urllib import request
-from minio import Minio, S3Error
-from airflow.utils.dates import days_ago
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-import pendulum
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta
+import urllib.request
 import os
-import urllib.error
+import shutil
+from minio import Minio
 
+def grab_data_2023_to_2024():
+    """Delete existing files and download files from January 2023 to February 2024 and save locally."""
+    base_url = "https://d37ci6vzurychx.cloudfront.net/trip-data/"
+    years = range(2023, 2024)
+    months = range(1, 3)
+    data_dir = "C:/Users/DELL/Downloads/ATL-Datamart-main/ATL-Datamart-main/data/raw"
 
-def download_parquet(**kwargs):
-    # folder_path: str = r'..\..\data\raw'
-    # Construct the relative path to the folder
-    url: str = "https://d37ci6vzurychx.cloudfront.net/trip-data/"
-    filename: str = "yellow_tripdata"
-    extension: str = ".parquet"
+    # Supprimer les fichiers existants dans le dossier
+    if os.path.exists(data_dir):
+        shutil.rmtree(data_dir)
+    os.makedirs(data_dir, exist_ok=True)
 
-    month: str = pendulum.now().subtract(months=2).format('YYYY-MM')
-    try:
-        ___.___(___,
-                            ___)
-    except urllib.error.URLError as e:
-        raise RuntimeError(f"Failed to download the parquet file : {str(e)}") from e
+    for year in years:
+        for month in months:
+            filename = f"yellow_tripdata_{year}-{month:02d}.parquet"
+            file_url = base_url + filename
+            output_path = os.path.join(data_dir, filename)
+            try:
+                urllib.request.urlretrieve(file_url, output_path)
+                print(f"Downloaded {filename}")
+            except Exception as e:
+                print(f"Failed to download {filename}: {e}")
 
-
-# Python Function
-def upload_file(**kwargs):
-    ###############################################
-    # Upload generated file to Minio
-
+def write_data_minio():
     client = Minio(
         "minio:9000",
         secure=False,
         access_key="minio",
         secret_key="minio123"
     )
-    bucket: str = 'rawnyc'
+    bucket_name = "newyork-data-bucket"
+    folder_path = "C:/Users/DELL/Downloads/ATL-Datamart-main/ATL-Datamart-main/data/raw"
 
-    month: str = pendulum.now().subtract(months=2).format('YYYY-MM')
-    print(client.list_buckets())
+    if not client.bucket_exists(bucket_name):
+        client.make_bucket(bucket_name)
 
-    client.___(
-        bucket_name=___,
-        object_name=___,
-        file_path=___)
-    # On supprime le fichié récement téléchargés, pour éviter la redondance. On suppose qu'en arrivant ici, l'ajout est
-    # bien réalisé
-    os.remove(os.path.join("./", "yellow_tripdata_" + month + ".parquet"))
+    for file_name in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file_name)
+        if os.path.isfile(file_path) and file_name.endswith(".parquet"):
+            try:
+                client.fput_object(
+                    bucket_name=bucket_name,
+                    object_name=file_name,
+                    file_path=file_path
+                )
+                print(f"Fichier '{file_name}' uploaded to bucket '{bucket_name}'")
+            except Exception as e:
+                print(f"Error uploading {file_name}: {e}")
 
+# Define the DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
 
-###############################################
-with DAG(dag_id='Grab NYC Data to Minio',
-         start_date=days_ago(1),
-         schedule_interval=None,
-         catchup=False,
-         tags=['minio/read/write'],
-         ) as dag:
-    ###############################################
-    # Create a task to call your processing function
-    t1 = PythonOperator(
-        task_id='download_parquet',
-        provide_context=True,
-        python_callable=___
-    )
-    t2 = PythonOperator(
-        task_id='upload_file_task',
-        provide_context=True,
-        python_callable=___
-    )
-###############################################  
+dag = DAG(
+    dag_id='nyc_yellow_taxi',
+    default_args=default_args,
+    description='DAG for downloading and uploading NYC Yellow Taxi data',
+    schedule_interval='@monthly',
+    start_date=datetime(2023, 1, 1),
+    catchup=False
+)
 
-###############################################
-# first upload the file, then read the other file.
-t1 >> t2
-###############################################
+# Define tasks
+download_task = PythonOperator(
+    task_id='download_data',
+    python_callable=grab_data_2023_to_2024,
+    dag=dag
+)
+
+upload_task = PythonOperator(
+    task_id='upload_to_minio',
+    python_callable=write_data_minio,
+    dag=dag
+)
+
+# Set task dependencies
+download_task >> upload_task
