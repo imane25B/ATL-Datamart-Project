@@ -1,0 +1,30 @@
+checks for fact_trip:
+  - schema:
+      warn:
+        when required column missing:
+          - trip_id
+          - pickup_datetime
+          - dropoff_datetime
+          - passenger_count
+          - trip_distance
+          - fare_amount
+          - total_amount
+          - payment_type_id
+          - pickup_location_id
+          - dropoff_location_id
+          - time_id
+      fail:
+        when forbidden column present:
+          - column_name1
+          - column_name2
+      rows:
+        - passenger_count > 0
+        - trip_distance >= 0
+        - fare_amount >= 0
+        - total_amount >= fare_amount
+        - dropoff_datetime > pickup_datetime
+      relationships:
+        - ref dim_payment_type: payment_type_id
+        - ref dim_location: pickup_location_id
+        - ref dim_location: dropoff_location_id
+        - ref dim_time: time_id

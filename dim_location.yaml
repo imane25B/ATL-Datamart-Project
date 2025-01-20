@@ -1,0 +1,16 @@
+checks for dim_location:
+  - schema:
+      warn:
+        when required column missing:
+          - location_id
+          - location_name
+          - borough
+          - latitude
+          - longitude
+      fail:
+        when forbidden column present:
+          - column_name1
+          - column_name2
+      rows:
+        - latitude between -90 and 90
+        - longitude between -180 and 180

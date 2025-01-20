@@ -1,0 +1,20 @@
+# checks for dim_time.yml
+checks for dim_time:
+  - schema:
+      warn:
+        when required column missing:
+          - time_id
+          - datetime
+          - hour
+          - day
+          - month
+          - year
+      fail:
+        when forbidden column present:
+          - column_name1
+          - column_name2
+      rows:
+        - hour between 0 and 23
+        - day between 1 and 31
+        - month between 1 and 12
+        - year between 2000 and 2025

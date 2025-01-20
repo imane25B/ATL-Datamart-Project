@@ -1,0 +1,17 @@
+checks for dim_payment_type:
+  - schema:
+      warn:
+        when required column missing:
+          - payment_type_id
+          - payment_type
+      fail:
+        when forbidden column present:
+          - column_name1
+          - column_name2
+      valid values:
+        payment_type:
+          - 'Credit card'
+          - 'Cash'
+          - 'No charge'
+          - 'Dispute'
+          - 'Unknown'
